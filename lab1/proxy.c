@@ -343,11 +343,13 @@ void fake_host(char* head) {
             strcpy(hostname, fake_host);
             printf("[fliter] Fake new hostname = %s\n", hostname);
             memset(head, 0, strlen(head));
-            strcpy(head, "GET http://www.baidu.com/ HTTP/1.1\r\n"
-                         "Host: www.baidu.com\r\n"
-                         "User-Agent: curl/7.79.1\r\n"
-                         "Accept: */*\r\n"
-                         "Proxy-Connection: Keep-Alive\r\n\r\n");
+            sprintf(head,
+                    "GET http://%s/ HTTP/1.1\r\n"
+                    "Host: %s\r\n"
+                    "User-Agent: curl/7.79.1\r\n"
+                    "Accept: */*\r\n"
+                    "Proxy-Connection: Keep-Alive\r\n\r\n",
+                    fake_host, fake_host);
             break;
         }
     }
