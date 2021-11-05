@@ -64,6 +64,9 @@ void server(void* main_arg_port) {
     loss[0]        = 1; // 0 号丢失 1 次
     loss[3]        = 1; // 3 号丢失 1 次
     loss[4]        = 2; // 4 号丢失 2 次
+    loss[6]        = 1; // 6 号丢失 1 次
+    loss[7]        = 1; // 7 号丢失 1 次
+    loss[9]        = 2; // 9 号丢失 2 次
 #endif
 
     // 接收客户消息
@@ -118,6 +121,20 @@ void server(void* main_arg_port) {
             // 是想要的
             excepted_index++;
             printf("[info %s] Index %u accepted!\n", get_time(), index);
+#ifdef TFILE
+            // 写入文件，只兼容 GBN
+            int recv_file_fd =
+                open("recv.txt", O_RDWR | O_CREAT | O_APPEND, 0664);
+            if (recv_file_fd == -1) {
+                perror("[error] open");
+                exit(-1);
+            }
+            char write_buf[1024] = {0};
+            strcpy(write_buf, recv_buf + 8);
+            strcat(write_buf, " ");
+            write(recv_file_fd, write_buf, strlen(write_buf));
+            close(recv_file_fd);
+#endif
         } else {
 #ifdef SR
             // 不是想要的，但是缓存

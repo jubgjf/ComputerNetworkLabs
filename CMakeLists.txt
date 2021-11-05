@@ -42,6 +42,12 @@ if(SR)
     add_definitions(-DSR)
 endif(SR)
 
+# 文件传输
+option(TFILE "file" OFF)
+if(TFILE)
+    add_definitions(-DTFILE)
+endif(TFILE)
+
 # C/S 结构
 add_executable(
     lab2_server
@@ -76,6 +82,16 @@ add_executable(
 )
 target_link_libraries(lab2_peer PRIVATE Threads::Threads)
 
+# 文件传输
+add_executable(
+    lab2_file_client
+    lab2/file_client.c
+    lab2/common.c
+    lab2/common.h
+    lab2/client.c
+    lab2/client.h
+)
+target_link_libraries(lab2_file_client PRIVATE Threads::Threads)
 
 # ===== <pthread.h> 多线程 =====
 set(THREADS_PREFER_PTHREAD_FLAG ON)
