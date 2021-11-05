@@ -25,7 +25,42 @@ if(FAKE_HOST)
     add_definitions(-DFAKE_HOST)
 endif(FAKE_HOST)
 
-# <pthread.h> 多线程
+target_link_libraries(lab1 PRIVATE Threads::Threads)
+
+
+# ===== Lab 2 =====
+
+add_executable(
+    lab2_server
+    lab2/common.c
+    lab2/common.h
+    lab2/server.c
+    lab2/server.h
+)
+target_link_libraries(lab2_server PRIVATE Threads::Threads)
+
+add_executable(
+    lab2_client
+    lab2/common.c
+    lab2/common.h
+    lab2/client.c
+    lab2/client.h
+)
+target_link_libraries(lab2_client PRIVATE Threads::Threads)
+
+# 丢包
+option(LOSS "loss" OFF)
+if(LOSS)
+    add_definitions(-DLOSS)
+endif(LOSS)
+
+# SR 协议
+option(SR "sr" OFF)
+if(SR)
+    add_definitions(-DSR)
+endif(SR)
+
+
+# ===== <pthread.h> 多线程 =====
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-target_link_libraries(lab1 PRIVATE Threads::Threads)
