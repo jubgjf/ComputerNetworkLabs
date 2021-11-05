@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,21 +15,24 @@
 /**
  * @brief 接收方窗口
  */
-int sender_window[1024] = {0};
+int recv_window[1024] = {0};
 #endif
 
-int main() {
+void server(void* main_arg_port) {
 #ifdef SR
     printf("[info %s] Running in SR!\n", get_time());
 #else
     printf("[info %s] Running in GBN!\n", get_time());
 #endif
 
+    struct main_arg_port arg_p = *(struct main_arg_port*)main_arg_port;
+    uint16_t             local_server_port = arg_p.local_server_port;
+
     // 监听客户的套接字
     int server_fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (server_fd == -1) {
         perror("[error] socket");
-        return -1;
+        exit(-1);
     }
 
     // 防止出现 bind: Address already in use
@@ -36,7 +40,7 @@ int main() {
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(int)) ==
         -1) {
         perror("[error] setsockopt reuseaddr");
-        return -1;
+        exit(-1);
     }
 
     // 绑定本地地址
@@ -44,11 +48,11 @@ int main() {
     memset(&server_saddr, 0, sizeof(server_saddr));
     server_saddr.sin_family      = AF_INET;
     server_saddr.sin_addr.s_addr = INADDR_ANY;
-    server_saddr.sin_port        = htons(SERVER_PORT);
+    server_saddr.sin_port        = htons(local_server_port);
     if (bind(server_fd, (struct sockaddr*)&server_saddr,
              sizeof(server_saddr)) == -1) {
         perror("[error] bind");
-        return -1;
+        exit(-1);
     }
 
     // 最后一个成功接收的分组
@@ -72,7 +76,7 @@ int main() {
         if (recvfrom(server_fd, recv_buf, sizeof(recv_buf), 0,
                      (struct sockaddr*)&client_addr, &len) == -1) {
             perror("[error] recvfrom");
-            return -1;
+            exit(-1);
         }
 
         // 检查 0 - 3 字节是否为 "SEND"
@@ -80,7 +84,7 @@ int main() {
         strncpy(first4, recv_buf, sizeof(first4));
         if (strcmp(first4, "SEND")) {
             printf("[error %s] first 4 != \"SEND\"\n", get_time());
-            return -1;
+            exit(-1);
         }
 
         // 检查 4 - 7 字节的序号
@@ -106,7 +110,7 @@ int main() {
         printf("%27s+--------------------------------\n", " ");
 
 #ifdef SR
-        sender_window[index] = 1;
+        recv_window[index] = 1;
 #endif
 
         // 检查接收到的分组是否是想要的
@@ -146,6 +150,4 @@ int main() {
     }
 
     close(server_fd);
-
-    return 0;
 }

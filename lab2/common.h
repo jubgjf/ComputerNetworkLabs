@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -32,13 +33,33 @@
 // xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx
 
 /**
- * @brief 服务器端口号
- */
-#define SERVER_PORT 10000
-
-/**
  * @brief 获取当前时间字符串，格式为 %H:%M:%S
  *
  * @return char* 返回格式化的字符串
  */
 char* get_time();
+
+/**
+ * @brief 删除字符串最后一个字符
+ *
+ * @param str 字符串
+ */
+void strpop(char* str);
+
+/**
+ * @brief main 函数参数
+ */
+struct main_arg {
+    int    argc;
+    char** argv;
+};
+
+/**
+ * @brief main 函数参数和端口号
+ *
+ */
+struct main_arg_port {
+    struct main_arg arg;
+    uint16_t        local_server_port;
+    uint16_t        remote_server_port;
+};

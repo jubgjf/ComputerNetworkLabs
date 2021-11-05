@@ -30,24 +30,6 @@ target_link_libraries(lab1 PRIVATE Threads::Threads)
 
 # ===== Lab 2 =====
 
-add_executable(
-    lab2_server
-    lab2/common.c
-    lab2/common.h
-    lab2/server.c
-    lab2/server.h
-)
-target_link_libraries(lab2_server PRIVATE Threads::Threads)
-
-add_executable(
-    lab2_client
-    lab2/common.c
-    lab2/common.h
-    lab2/client.c
-    lab2/client.h
-)
-target_link_libraries(lab2_client PRIVATE Threads::Threads)
-
 # 丢包
 option(LOSS "loss" OFF)
 if(LOSS)
@@ -59,6 +41,40 @@ option(SR "sr" OFF)
 if(SR)
     add_definitions(-DSR)
 endif(SR)
+
+# C/S 结构
+add_executable(
+    lab2_server
+    lab2/main_server.c
+    lab2/common.c
+    lab2/common.h
+    lab2/server.c
+    lab2/server.h
+)
+target_link_libraries(lab2_server PRIVATE Threads::Threads)
+
+add_executable(
+    lab2_client
+    lab2/main_client.c
+    lab2/common.c
+    lab2/common.h
+    lab2/client.c
+    lab2/client.h
+)
+target_link_libraries(lab2_client PRIVATE Threads::Threads)
+
+# 双向传输
+add_executable(
+    lab2_peer
+    lab2/peer.c
+    lab2/common.c
+    lab2/common.h
+    lab2/client.c
+    lab2/client.h
+    lab2/server.c
+    lab2/server.h
+)
+target_link_libraries(lab2_peer PRIVATE Threads::Threads)
 
 
 # ===== <pthread.h> 多线程 =====

@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,12 +20,18 @@ int sender_window[1024] = {0};
  */
 pthread_rwlock_t sender_window_lock;
 
-int main(int argc, char** argv) {
+void client(void* main_arg_port) {
 #ifdef SR
     printf("[info %s] Running in SR!\n", get_time());
 #else
     printf("[info %s] Running in GBN!\n", get_time());
 #endif
+
+    struct main_arg_port arg_p = *(struct main_arg_port*)main_arg_port;
+    int                  argc  = arg_p.arg.argc;
+    char**               argv  = arg_p.arg.argv;
+    uint16_t             local_server_port  = arg_p.local_server_port;
+    uint16_t             remote_server_port = arg_p.remote_server_port;
 
     // 发送窗口起始序号
     unsigned base = 0;
@@ -54,9 +61,11 @@ int main(int argc, char** argv) {
             }
 
             // 报文信息
-            struct message_seg s;
+            struct message_seg_port s;
             strcpy(s.msg, argv[p + 1]);
-            s.index = p;
+            s.index              = p;
+            s.local_server_port  = local_server_port;
+            s.remote_server_port = remote_server_port;
 
             // 创建连接线程
             printf("[info %s] Create thread for index %u!\n", get_time(), p);
@@ -114,11 +123,12 @@ int main(int argc, char** argv) {
     pthread_exit(NULL);
 }
 
-void threaded_client(void* seg) {
+void threaded_client(void* seg_port) {
     // 待发送的消息信息
-    struct message_seg s       = *((struct message_seg*)seg);
-    char*              content = s.msg;
-    unsigned           index   = s.index;
+    struct message_seg_port s       = *((struct message_seg_port*)seg_port);
+    char*                   content = s.msg;
+    unsigned                index   = s.index;
+    uint16_t                remote_server_port = s.remote_server_port;
 
     // 发起连接的套接字
     int request_fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -149,7 +159,7 @@ void threaded_client(void* seg) {
     struct sockaddr_in server_addr;
     server_addr.sin_family      = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    server_addr.sin_port        = htons(SERVER_PORT);
+    server_addr.sin_port        = htons(remote_server_port);
 
     // 超时次数
     int timeout_count = 0;
