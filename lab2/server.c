@@ -11,16 +11,15 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#ifdef SR
-/**
- * @brief 接收方窗口
- */
-int recv_window[1024] = {0};
-#endif
-
 void server(void* main_arg_port) {
 #ifdef SR
     printf("[info %s] Running in SR!\n", get_time());
+
+    // 接收方窗口
+    int      recv_window[1024] = {0};
+    unsigned recv_window_size  = 3;
+    unsigned recv_base         = 0;
+    unsigned recv_next_seq     = recv_base + recv_window_size;
 #else
     printf("[info %s] Running in GBN!\n", get_time());
 #endif
@@ -113,10 +112,12 @@ void server(void* main_arg_port) {
         printf("%27s+--------------------------------\n", " ");
 
 #ifdef SR
-        recv_window[index] = 1;
+        if (index >= recv_base && index < recv_next_seq) {
+            recv_window[index] = 1;
+        }
 #endif
 
-        // 检查接收到的分组是否是想要的
+        // GBN: 检查接收到的分组是否是想要的
         if (excepted_index == index) {
             // 是想要的
             excepted_index++;
@@ -137,8 +138,13 @@ void server(void* main_arg_port) {
 #endif
         } else {
 #ifdef SR
-            // 不是想要的，但是缓存
-            printf("[info %s] Index %u cached!\n", get_time(), index);
+            if (index >= recv_base && index < recv_next_seq) {
+                // 不是想要的，但是缓存
+                printf("[info %s] Index %u cached!\n", get_time(), index);
+            } else {
+                // 不是想要的，但在接收窗口之外，所以不缓存
+                printf("[info %s] Index %u not cached!\n", get_time(), index);
+            }
 #else
             // 不是想要的，不发 ACK
             printf("[info %s] Index %u not accept, waiting for index %u!\n",
@@ -146,6 +152,23 @@ void server(void* main_arg_port) {
             continue;
 #endif
         }
+
+#ifdef SR
+        // 移动接收窗口
+        // 计算从 recv_base 开始有几个连续的缓存报文
+        int cached_count = 0;
+        for (unsigned i = recv_base; i < recv_next_seq; i++) {
+            if (recv_window[i] == 1) {
+                cached_count++;
+            } else {
+                break;
+            }
+        }
+        recv_base += cached_count;
+        recv_next_seq += cached_count;
+        printf("[info %s] recv_base = %u, recv_next_seq = %u\n", get_time(),
+               recv_base, recv_next_seq);
+#endif
 
         // 回复客户
         char send_buf[1024] = {0};
